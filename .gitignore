@@ -2,3 +2,4 @@ dist
 demo/dist
 .idea
 node_modules
+.DS_Store

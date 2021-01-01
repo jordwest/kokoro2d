@@ -4,13 +4,7 @@ attribute vec4 position;
 
 uniform vec2 offset;
 uniform vec2 size;
-uniform vec2 texOffset;
-uniform vec2 texSize;
 uniform vec2 resolution;
-uniform float time;
-uniform bool flipY;
-
-varying vec2 texCoord;
 
 void main() {
   vec2 scaleFactor = vec2(
@@ -26,7 +20,4 @@ void main() {
     0,
     1
   );
-  
-  vec2 flipped = vec2(position.x, flipY ? 1.0 - position.y : position.y);
-  texCoord = flipped * texSize + texOffset;
 }

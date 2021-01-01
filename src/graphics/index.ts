@@ -1,6 +1,7 @@
 import { SpriteProgram } from './shaders/sprite';
 import * as twgl from 'twgl.js';
 import {Quad} from "./quad";
+import {RectProgram} from "./shaders/shapes/rect";
 
 export namespace Graphics {
     export enum FilterMode {
@@ -24,6 +25,7 @@ export namespace Graphics {
         public readonly width: number;
         public readonly height: number;
         public readonly texture: WebGLTexture;
+        public readonly flipped = false;
 
         constructor(ctx: WebGLRenderingContext, filename: string, width: number, height: number) {
             this.ctx = ctx;
@@ -52,6 +54,7 @@ export namespace Graphics {
         public readonly height: number;
         public readonly texture: WebGLTexture;
         public readonly framebuffer: twgl.FramebufferInfo;
+        public readonly flipped = true;
         
         constructor(gl: WebGLRenderingContext, width: number, height: number) {
             this.ctx = gl;
@@ -72,11 +75,20 @@ export namespace Graphics {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mag === FilterMode.LINEAR ? gl.LINEAR : gl.NEAREST);
         }
     }
+    
+    export type Color = {
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+    }
 
     type ReadyState = {
         ctx: WebGLRenderingContext;
         spriteProgram: SpriteProgram;
+        rectProgram: RectProgram;
         activeCanvas: Canvas | undefined;
+        activeColor: Color;
     };
     
     let state: ReadyState | undefined;
@@ -87,14 +99,22 @@ export namespace Graphics {
     }
     
     export function init(canvas: HTMLCanvasElement) {
-        const ctx = canvas.getContext('webgl');
+        const ctx = canvas.getContext('webgl' , {premultipliedAlpha: false});
         if (ctx == null) throw new Error('[Kokoro2D] Could not initialize WebGL');
 
         const spriteProgram = new SpriteProgram(ctx);
+        const rectProgram = new RectProgram(ctx);
         state = {
             ctx,
             spriteProgram,
+            rectProgram,
             activeCanvas: undefined,
+            activeColor: {
+                r: 1,
+                g: 1,
+                b: 1,
+                a: 1,
+            }
         };
         
         setCanvas();
@@ -150,6 +170,26 @@ export namespace Graphics {
         } else {
             resolution = [ctx.canvas.width, ctx.canvas.height];
         }
-        spriteProgram.render(x, y, width, height, image.texture, quad, 0, resolution);
+        const flip = image.flipped;
+        spriteProgram.render(x, y, width, height, image.texture, quad, 0, resolution, flip);
+    }
+    
+    export function setColor(color: Color) {
+        getState().activeColor = color;
+    }
+    
+    export function rectangle(x: number, y: number, width: number, height: number) {
+        const { ctx, rectProgram, activeCanvas, activeColor } = getState();
+
+        let resolution: [number, number];
+        if (activeCanvas != null) {
+            resolution = [activeCanvas.width, activeCanvas.height];
+        } else {
+            resolution = [ctx.canvas.width, ctx.canvas.height];
+        }
+
+        ctx.enable(ctx.BLEND);
+        ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
+        rectProgram.render(x, y, width, height, [activeColor.r, activeColor.g, activeColor.b, activeColor.a], resolution);
     }
 }
