@@ -1,0 +1,15 @@
+{
+  "name": "kokoro2d-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "types": "src/lib.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "kokoro2d": "file:../"
+  }
+}
